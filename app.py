@@ -1,7 +1,10 @@
 import streamlit as st
 import pickle
 import pandas as pd
+import os
 
+# Print the current working directory
+print("Current working directory:", os.getcwd())
 # IPL Teams
 teams = ['Sunrisers Hyderabad',
          'Mumbai Indians',
