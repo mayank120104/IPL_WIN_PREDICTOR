@@ -21,7 +21,7 @@ cities = ['Hyderabad', 'Bangalore', 'Mumbai', 'Indore', 'Kolkata', 'Delhi',
           'Sharjah', 'Mohali', 'Bengaluru']
 
 # Load pre-trained model (pickle file)
-pipe = pickle.load(open('pipe.pkl', 'rb'))
+pipe = pickle.load(open('C:\Users\MAYANK SHARMA\OneDrive\Desktop\render-demo\pipe.pkl', 'rb'))
 
 # Streamlit app title
 st.title('IPL WIN PREDICTOR')
