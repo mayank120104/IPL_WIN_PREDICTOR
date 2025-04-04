@@ -1,6 +1,43 @@
 import streamlit as st
 import pickle
 import pandas as pd
+import time
+
+if 'splash_shown' not in st.session_state:
+    st.session_state.splash_shown = False
+
+if not st.session_state.splash_shown:
+    # Splash screen
+    st.markdown("""
+        <style>
+        .video-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: black;
+            z-index: 9999;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+        }
+        </style>
+        <div class="video-container">
+            <iframe src="https://www.youtube.com/embed/Q1bii-VSMQM?autoplay=1&controls=0&modestbranding=1&showinfo=0&rel=0" 
+                frameborder="0" allow="autoplay; encrypted-media" allowfullscreen>
+            </iframe>
+        </div>
+    """, unsafe_allow_html=True)
+
+    time.sleep(60)
+    st.session_state.splash_shown = True
+    st.experimental_rerun()
+
 
 # Set page configuration
 st.set_page_config(page_title="IPL Victory Predictor", layout="wide")
