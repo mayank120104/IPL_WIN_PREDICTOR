@@ -7,55 +7,52 @@ import os
 # Set page configuration
 st.set_page_config(page_title="IPL Victory Predictor", layout="wide")
 
-# Function to play splash video
+# Function to display the splash screen with video and skip button
 def splash_screen():
-    with open("videos/intro_clip.mp4", "rb") as video_file:
-        video_bytes = video_file.read()
-        encoded = base64.b64encode(video_bytes).decode()
-        video_html = f"""
-        <style>
-        .video-container {{
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            width: 100vw;
-            background-color: black;
-            z-index: 9999;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }}
-        video {{
-            height: 100%;
-            width: 100%;
-            object-fit: cover;
-        }}
-        </style>
-        <div class="video-container">
-            <video autoplay muted onended="window.parent.postMessage('video_done', '*')">
-                <source src="data:video/mp4;base64,{encoded}" type="video/mp4">
-            </video>
-        </div>
-        <script>
-        window.addEventListener('message', function(event) {{
-            if (event.data === 'video_done') {{
-                const streamlitDoc = window.parent.document;
-                const skipButton = streamlitDoc.querySelector('[data-testid="stButton"] button');
-                if (skipButton) skipButton.click();
-            }}
-        }});
-        </script>
-        """
-        st.markdown(video_html, unsafe_allow_html=True)
-        st.button("Skip Intro", on_click=lambda: st.session_state.update({'splash_shown': True}))
+    video_file = 'videos/intro_clip.mp4'
+    video_placeholder = st.empty()
+    skip_button_placeholder = st.empty()
 
-# Main App
+    # Custom HTML to embed video with JavaScript event handling
+    video_html = f"""
+    <video id="intro_video" autoplay muted style="width: 100%;">
+        <source src="data:video/mp4;base64,{base64.b64encode(open(video_file, "rb").read()).decode()}" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    <script>
+        var video = document.getElementById('intro_video');
+        video.onended = function() {{
+            fetch('/_stcore/stream', {{
+                method: 'POST',
+                headers: {{
+                    'Content-Type': 'application/json'
+                }},
+                body: JSON.stringify({{ 'splash_shown': true }})
+            }}).then(() => {{
+                window.location.reload();
+            }});
+        }};
+    </script>
+    """
+    video_placeholder.markdown(video_html, unsafe_allow_html=True)
 
-def main_app():
+    # Display the skip button
+    if skip_button_placeholder.button('Skip Intro'):
+        st.session_state.splash_shown = True
+        st.experimental_rerun()
+
+    # Stop further execution until the video ends or skip is pressed
+    st.stop()
+
+def main():
+    # Check if the splash screen has been shown
+    if 'splash_shown' not in st.session_state:
+        splash_screen()
+
     # Load the trained model
     pipe = pickle.load(open('pipe.pkl', 'rb'))
 
+    # Define Teams & Cities
     teams = ['Sunrisers Hyderabad', 'Mumbai Indians', 'Royal Challengers Bangalore', 
              'Kolkata Knight Riders', 'Kings XI Punjab', 'Chennai Super Kings', 
              'Rajasthan Royals', 'Delhi Capitals']
@@ -67,52 +64,66 @@ def main_app():
               'Visakhapatnam', 'Pune', 'Raipur', 'Ranchi', 'Abu Dhabi',
               'Sharjah', 'Mohali', 'Bengaluru']
 
-    st.markdown("""
-    <style>
-    body { background-color: black; }
-    .big-text {
-        font-size: 70px !important;
-        font-weight: bold;
-        text-align: center;
-        color: white;
-        margin-top: 20px;
-    }
-    .small-text {
-        font-size: 24px;
-        text-align: center;
-        color: white;
-    }
-    .title-text {
-        font-size: 60px !important;
-        font-weight: bold;
-        text-align: left;
-        color: white;
-        margin-top: 50px;
-    }
-    .stButton>button {
-        width: 100%;
-        background-color: #FF4500;
-        color: white;
-        font-size: 20px;
-        padding: 10px;
-        border-radius: 8px;
-        transition: background-color 0.3s ease, color 0.3s ease;
-    }
-    .stButton>button:hover {
-        background-color: #D84315;
-        color: white;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+    # Custom Styling
+    st.markdown(
+        """
+        <style>
+        body {
+            background-color: black;
+        }
+        .big-text {
+            font-size: 70px !important;
+            font-weight: bold;
+            text-align: center;
+            color: white;
+            margin-top: 20px;
+        }
+        .small-text {
+            font-size: 24px;
+            text-align: center;
+            color: white;
+        }
+        .title-text {
+            font-size: 60px !important;
+            font-weight: bold;
+            text-align: left;
+            color: white;
+            margin-top: 50px;
+        }
+        .stButton>button {
+            width: 100%;
+            background-color: #FF4500;
+            color: white;
+            font-size: 20px;
+            padding: 10px;
+            border-radius: 8px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .stButton>button:hover {
+            background-color: #D84315;
+            color: white;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
+    # Main Heading
     st.markdown("<p class='big-text'>Can't Tell a Yorker from a Googly? We Got Your IPL Predictions Covered</p>", unsafe_allow_html=True)
     st.markdown("<p class='small-text'>Dominate your fantasy league and win big with our winning strategies</p>", unsafe_allow_html=True)
 
-    st.image("images/ipl_players.jpeg", use_container_width=True)
+    # Top Image
+    top_image_path = "images/ipl_players.jpeg" 
+    st.image(top_image_path, use_container_width=True)
+
+    # Add vertical spacing
     st.markdown("<br>" * 14, unsafe_allow_html=True)
+
+    # Title
     st.markdown("<p class='title-text'>IPL VICTORY PREDICTOR</p>", unsafe_allow_html=True)
 
-    col1, col2 = st.columns(2)
+    # Layout
+    col1, col2 = st.columns(2)  
 
     with col1:  
         batting_team = st.selectbox('Select the batting team', sorted(teams), key="batting_team")
@@ -124,7 +135,8 @@ def main_app():
         wickets = st.number_input('Wickets fallen', min_value=0, max_value=10, key="wickets")
 
     with col2:
-        st.image("images/ipl_trophy.jpeg", use_container_width=True)
+        trophy_image_path = "images/ipl_trophy.jpeg"
+        st.image(trophy_image_path, use_container_width=True)
 
     with col1:
         if st.button('Predict'):
@@ -132,33 +144,6 @@ def main_app():
                 st.warning("Overs completed cannot be zero!")
             else:
                 runs_left = target - score
-                balls_left = 120 - (overs * 6)
-                remaining_wickets = 10 - wickets
-                crr = score / overs
-                rrr = (runs_left * 6) / balls_left if balls_left > 0 else 0
-
-                input_df = pd.DataFrame({
-                    'batting_team': [batting_team],
-                    'bowling_team': [bowling_team],
-                    'city': [selected_city],
-                    'runs_left': [runs_left],
-                    'balls_left': [balls_left],
-                    'wickets': [remaining_wickets],
-                    'total_runs_x': [target],
-                    'crr': [crr],
-                    'rrr': [rrr]
-                })
-
-                result = pipe.predict_proba(input_df)
-                loss_prob = result[0][0]
-                win_prob = result[0][1]
-
-                st.markdown(f"<h2 style='text-align: left; color: #FF4500;'>{batting_team} - {round(win_prob * 100)}%</h2>", unsafe_allow_html=True)
-                st.markdown(f"<h2 style='text-align: left; color: #FF4500;'>{bowling_team} - {round(loss_prob * 100)}%</h2>", unsafe_allow_html=True)
-
-if __name__ == "__main__":
-    if 'splash_shown' not in st.session_state or not st.session_state.splash_shown:
-        splash_screen()
-        st.stop()
-    else:
-        main_app()
+                balls_left = 120 -
+::contentReference[oaicite:5]{index=5}
+ 
