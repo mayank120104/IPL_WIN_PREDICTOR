@@ -6,55 +6,39 @@ import time
 # Set page configuration
 st.set_page_config(page_title="IPL Victory Predictor", layout="wide")
 
-# VIDEO SPLASH SCREEN (Only show on first load using session state)
-if 'intro_played' not in st.session_state:
+# Session state to track if the intro was shown
+if "intro_played" not in st.session_state:
     st.session_state.intro_played = False
 
+# Show intro video if not played
 if not st.session_state.intro_played:
-    st.session_state.intro_played = True
+    st.video("intro_clip.mp4")  # Ensure this file is in the correct location
 
-    video_path = "static/intro_clip.mp4"
-    video_url = f"/{video_path}"
+    # JavaScript to automatically redirect after video ends (6 sec delay)
+    st.markdown(
+        """
+        <script>
+        setTimeout(function() {
+            window.location.href = "?skip_intro=true";
+        }, 6000);
+        </script>
+        """,
+        unsafe_allow_html=True
+    )
 
-    video_html = f"""
-    <video autoplay muted playsinline id="introVideo" style="width:100%;">
-        <source src="{video_url}" type="video/mp4">
-    </video>
-    <script>
-        var vid = document.getElementById("introVideo");
-        vid.onended = function() {{
-            window.location.reload();
-        }};
-    </script>
-    <style>
-        #skip-button {{
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background-color: #FF4500;
-            color: white;
-            padding: 10px 20px;
-            font-size: 16px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            z-index: 9999;
-        }}
-        #skip-button:hover {{
-            background-color: #D84315;
-        }}
-    </style>
-    <button id="skip-button" onclick="window.location.reload()">Skip Intro</button>
-    """
-    st.markdown(video_html, unsafe_allow_html=True)
-    st.stop()
+    # Button to skip intro
+    if st.button("Skip Intro"):
+        st.session_state.intro_played = True
+        st.rerun()
+
+    st.stop()  # Stop execution here so main content doesn't load yet
 
 # Load the trained model
 pipe = pickle.load(open('pipe.pkl', 'rb'))
 
 # Define Teams & Cities
-teams = ['Sunrisers Hyderabad', 'Mumbai Indians', 'Royal Challengers Bangalore',
-         'Kolkata Knight Riders', 'Kings XI Punjab', 'Chennai Super Kings',
+teams = ['Sunrisers Hyderabad', 'Mumbai Indians', 'Royal Challengers Bangalore', 
+         'Kolkata Knight Riders', 'Kings XI Punjab', 'Chennai Super Kings', 
          'Rajasthan Royals', 'Delhi Capitals']
 
 cities = ['Hyderabad', 'Bangalore', 'Mumbai', 'Indore', 'Kolkata', 'Delhi',
@@ -64,106 +48,59 @@ cities = ['Hyderabad', 'Bangalore', 'Mumbai', 'Indore', 'Kolkata', 'Delhi',
           'Visakhapatnam', 'Pune', 'Raipur', 'Ranchi', 'Abu Dhabi',
           'Sharjah', 'Mohali', 'Bengaluru']
 
-# Custom Styling
-st.markdown(
-    """
-    <style>
-    body {
-        background-color: black;
-    }
-    .big-text {
-        font-size: 70px !important;
-        font-weight: bold;
-        text-align: center;
-        color: white;
-        margin-top: 20px;
-    }
-    .small-text {
-        font-size: 24px;
-        text-align: center;
-        color: white;
-    }
-    .title-text {
-        font-size: 60px !important;
-        font-weight: bold;
-        text-align: left;
-        color: white;
-        margin-top: 50px;
-    }
-    .stButton>button {
-        width: 100%;
-        background-color: #FF4500;
-        color: white;
-        font-size: 20px;
-        padding: 10px;
-        border-radius: 8px;
-        transition: background-color 0.3s ease, color 0.3s ease;
-    }
-    .stButton>button:hover {
-        background-color: #D84315;
-        color: white;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
 # Main Heading
-st.markdown("<p class='big-text'>Can't Tell a Yorker from a Googly? We Got Your IPL Predictions Covered</p>", unsafe_allow_html=True)
-st.markdown("<p class='small-text'>Dominate your fantasy league and win big with our winning strategies</p>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'>IPL Victory Predictor</h1>", unsafe_allow_html=True)
 
 # Image Path Handling for Top Image
-top_image_path = "images/ipl_players.jpeg"
-st.image(top_image_path, use_container_width=True)
-
-# Add a Large Gap for Scrolling Effect
-st.markdown("<br><br><br><br><br><br><br><br><br><br><br><br><br><br>", unsafe_allow_html=True)
+st.image("images/ipl_players.jpeg", use_container_width=True)
 
 # Title
-st.markdown("<p class='title-text'>IPL VICTORY PREDICTOR</p>", unsafe_allow_html=True)
+st.markdown("<h2 style='text-align: left;'>IPL VICTORY PREDICTOR</h2>", unsafe_allow_html=True)
 
 # Layout: Left - Input Fields | Right - IPL Trophy Image
 col1, col2 = st.columns(2)
 
 with col1:
-    batting_team = st.selectbox('Select the batting team', sorted(teams), key="batting_team")
-    bowling_team = st.selectbox('Select the bowling team', sorted(teams), key="bowling_team")
-    selected_city = st.selectbox('Select the host city', sorted(cities), key="city")
-    target = st.number_input('Target', min_value=1, key="target")
-    score = st.number_input('Score', min_value=0, key="score")
-    overs = st.number_input('Overs completed', min_value=0.0, max_value=20.0, step=0.1, key="overs")
-    wickets = st.number_input('Wickets fallen', min_value=0, max_value=10, key="wickets")
+    batting_team = st.selectbox('Select the batting team', sorted(teams))
+    bowling_team = st.selectbox('Select the bowling team', sorted(teams))
+    selected_city = st.selectbox('Select the host city', sorted(cities))
+    target = st.number_input('Target', min_value=1)
+    score = st.number_input('Score', min_value=0)
+    overs = st.number_input('Overs completed', min_value=0.0, max_value=20.0, step=0.1)
+    wickets = st.number_input('Wickets fallen', min_value=0, max_value=10)
 
 with col2:
-    trophy_image_path = "images/ipl_trophy.jpeg"
-    st.image(trophy_image_path, use_container_width=True)
+    st.image("images/ipl_trophy.jpeg", use_container_width=True)
 
-with col1:
-    if st.button('Predict'):
-        if overs == 0:
-            st.warning("Overs completed cannot be zero!")
-        else:
-            runs_left = target - score
-            balls_left = 120 - (overs * 6)
-            remaining_wickets = 10 - wickets
-            crr = score / overs
-            rrr = (runs_left * 6) / balls_left if balls_left > 0 else 0
+# Predict Button
+if st.button('Predict'):
+    if overs == 0:
+        st.warning("Overs completed cannot be zero!")
+    else:
+        runs_left = target - score
+        balls_left = 120 - (overs * 6)
+        remaining_wickets = 10 - wickets
+        crr = score / overs
+        rrr = (runs_left * 6) / balls_left if balls_left > 0 else 0
 
-            input_df = pd.DataFrame({
-                'batting_team': [batting_team],
-                'bowling_team': [bowling_team],
-                'city': [selected_city],
-                'runs_left': [runs_left],
-                'balls_left': [balls_left],
-                'wickets': [remaining_wickets],
-                'total_runs_x': [target],
-                'crr': [crr],
-                'rrr': [rrr]
-            })
+        # Create Input DataFrame
+        input_df = pd.DataFrame({
+            'batting_team': [batting_team],
+            'bowling_team': [bowling_team],
+            'city': [selected_city],
+            'runs_left': [runs_left],
+            'balls_left': [balls_left],
+            'wickets': [remaining_wickets],
+            'total_runs_x': [target],
+            'crr': [crr],
+            'rrr': [rrr]
+        })
 
-            result = pipe.predict_proba(input_df)
-            loss_prob = result[0][0]
-            win_prob = result[0][1]
+        # Predict using Model
+        result = pipe.predict_proba(input_df)
+        loss_prob = result[0][0]
+        win_prob = result[0][1]
 
-            st.markdown(f"<h2 style='text-align: left; color: #FF4500;'>{batting_team} - {round(win_prob * 100)}%</h2>", unsafe_allow_html=True)
-            st.markdown(f"<h2 style='text-align: left; color: #FF4500;'>{bowling_team} - {round(loss_prob * 100)}%</h2>", unsafe_allow_html=True)
+        # Display Results
+        st.markdown(f"<h2 style='text-align: left; color: #FF4500;'>{batting_team} - {round(win_prob * 100)}%</h2>", unsafe_allow_html=True)
+        st.markdown(f"<h2 style='text-align: left; color: #FF4500;'>{bowling_team} - {round(loss_prob * 100)}%</h2>", unsafe_allow_html=True)
