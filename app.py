@@ -1,6 +1,52 @@
 import streamlit as st
 import pickle
 import pandas as pd
+import time
+
+# Step 1: Set up session state for splash video
+if "show_main_app" not in st.session_state:
+    st.session_state.show_main_app = False
+
+# Step 2: Splash screen logic
+if not st.session_state.show_main_app:
+    st.set_page_config(page_title="IPL Victory Predictor", layout="wide")
+    st.markdown("""
+        <style>
+        .video-container {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 9999;
+            background-color: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        </style>
+        <div class="video-container">
+            <video id="introVideo" autoplay muted>
+                <source src="/static/intro_clip.mp4" type="video/mp4">
+            </video>
+        </div>
+        <script>
+            const video = document.getElementById("introVideo");
+            video.onended = function() {
+                window.location.reload();
+            }
+        </script>
+    """, unsafe_allow_html=True)
+
+    time.sleep(7)  # Adjust based on video length
+    st.session_state.show_main_app = True
+    st.experimental_rerun()
+    st.stop()
+
+# Step 3: Main App Logic Starts Here
 
 # Set page configuration
 st.set_page_config(page_title="IPL Victory Predictor", layout="wide")
@@ -72,7 +118,7 @@ st.markdown("<p class='small-text'>Dominate your fantasy league and win big with
 top_image_path = "images/ipl_players.jpeg" 
 st.image(top_image_path, use_container_width=True)
 
-# **Add a Large Gap for Scrolling Effect**
+# Add a Large Gap for Scrolling Effect
 st.markdown("<br><br><br><br><br><br><br><br><br><br><br><br><br><br>", unsafe_allow_html=True)
 
 # Title
@@ -125,6 +171,6 @@ with col1:
             loss_prob = result[0][0]
             win_prob = result[0][1]
 
-            # Display Results (Still Left-Aligned)
+            # Display Results
             st.markdown(f"<h2 style='text-align: left; color: #FF4500;'>{batting_team} - {round(win_prob * 100)}%</h2>", unsafe_allow_html=True)
             st.markdown(f"<h2 style='text-align: left; color: #FF4500;'>{bowling_team} - {round(loss_prob * 100)}%</h2>", unsafe_allow_html=True)
