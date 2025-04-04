@@ -1,46 +1,56 @@
 import streamlit as st
 import pickle
 import pandas as pd
-import time
+import base64
 
-if 'splash_shown' not in st.session_state:
-    st.session_state.splash_shown = False
+# Set page configuration
+st.set_page_config(page_title="IPL Victory Predictor", layout="wide")
 
-if not st.session_state.splash_shown:
-    # Splash screen
-    st.markdown("""
+# Function to play local MP4 splash screen
+def autoplay_video(file_path):
+    with open(file_path, "rb") as video_file:
+        video_bytes = video_file.read()
+        encoded = base64.b64encode(video_bytes).decode()
+        video_html = f"""
         <style>
-        .video-container {
+        .video-container {{
             position: fixed;
             top: 0;
             left: 0;
             height: 100vh;
             width: 100vw;
+            background-color: black;
+            z-index: 9999;
             display: flex;
             justify-content: center;
             align-items: center;
-            background-color: black;
-            z-index: 9999;
-        }
-        iframe {
-            width: 100%;
+        }}
+        video {{
             height: 100%;
-        }
+            width: 100%;
+            object-fit: cover;
+        }}
         </style>
         <div class="video-container">
-            <iframe src="https://www.youtube.com/embed/Q1bii-VSMQM?autoplay=1&controls=0&modestbranding=1&showinfo=0&rel=0" 
-                frameborder="0" allow="autoplay; encrypted-media" allowfullscreen>
-            </iframe>
+            <video autoplay muted onended="parent.postMessage('video_done', '*')">
+                <source src="data:video/mp4;base64,{encoded}" type="video/mp4">
+            </video>
         </div>
-    """, unsafe_allow_html=True)
+        <script>
+        window.addEventListener('message', (event) => {{
+            if (event.data === 'video_done') {{
+                window.location.reload();
+            }}
+        }});
+        </script>
+        """
+        st.markdown(video_html, unsafe_allow_html=True)
 
-    time.sleep(60)
+# Splash screen logic
+if 'splash_shown' not in st.session_state:
+    autoplay_video("videos/intro_clip.mp4")
     st.session_state.splash_shown = True
-    st.experimental_rerun()
-
-
-# Set page configuration
-st.set_page_config(page_title="IPL Victory Predictor", layout="wide")
+    st.stop()
 
 # Load the trained model
 pipe = pickle.load(open('pipe.pkl', 'rb'))
@@ -109,7 +119,7 @@ st.markdown("<p class='small-text'>Dominate your fantasy league and win big with
 top_image_path = "images/ipl_players.jpeg" 
 st.image(top_image_path, use_container_width=True)
 
-# **Add a Large Gap for Scrolling Effect**
+# Add vertical spacing
 st.markdown("<br><br><br><br><br><br><br><br><br><br><br><br><br><br>", unsafe_allow_html=True)
 
 # Title
@@ -132,7 +142,7 @@ with col2:
     trophy_image_path = "images/ipl_trophy.jpeg"
     st.image(trophy_image_path, use_container_width=True)
 
-# Predict Button - Aligned and Styled
+# Predict Button
 with col1:
     if st.button('Predict'):
         if overs == 0:
@@ -162,6 +172,6 @@ with col1:
             loss_prob = result[0][0]
             win_prob = result[0][1]
 
-            # Display Results (Still Left-Aligned)
+            # Display Results
             st.markdown(f"<h2 style='text-align: left; color: #FF4500;'>{batting_team} - {round(win_prob * 100)}%</h2>", unsafe_allow_html=True)
             st.markdown(f"<h2 style='text-align: left; color: #FF4500;'>{bowling_team} - {round(loss_prob * 100)}%</h2>", unsafe_allow_html=True)
