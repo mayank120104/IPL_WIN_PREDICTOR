@@ -146,5 +146,5 @@ def main():
                 runs_left = target - score
                 balls_left = 120 - (overs * 6)
 
-::contentReference[oaicite:5]{index=5}
+
  
