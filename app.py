@@ -1,20 +1,68 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import pickle
 import pandas as pd
 
-# Set page configuration
+# Ensure page config is set
 st.set_page_config(page_title="IPL Victory Predictor", layout="wide")
 
-# Play intro video using hosted URL
-video_url = "https://ipl-win-predictor-dllb.onrender.com/static/intro_clip.mp4"
-st.video(video_url)
+# ---- SESSION STATE TO HANDLE INTRO ---- #
+if 'intro_done' not in st.session_state:
+    st.session_state.intro_done = False
 
-# Load the trained model
+# ---- INTRO PAGE ---- #
+if not st.session_state.intro_done:
+    st.markdown("<style>body { background-color: black; }</style>", unsafe_allow_html=True)
+
+    # HTML: Video with Skip button + JS
+    html_code = """
+    <video id="introVideo" width="100%" autoplay>
+      <source src="/static/intro_clip.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+    <br><br>
+    <div style="text-align:center;">
+      <button onclick="skipIntro()" style="padding: 12px 24px; font-size: 18px; background-color: #FF4500; color: white; border: none; border-radius: 8px; cursor: pointer;">
+        Skip Intro
+      </button>
+    </div>
+
+    <script>
+      var video = document.getElementById('introVideo');
+      video.onended = function() {
+          window.parent.postMessage("intro_done", "*");
+      };
+
+      function skipIntro() {
+          window.parent.postMessage("intro_done", "*");
+      }
+    </script>
+    """
+    components.html(html_code, height=400)
+
+    # JS Listener to set session state
+    st.markdown("""
+    <script>
+    window.addEventListener("message", (event) => {
+        if (event.data === "intro_done") {
+            document.cookie = "intro=done";
+            parent.window.location.reload();
+        }
+    });
+    </script>
+    """, unsafe_allow_html=True)
+
+    st.stop()
+
+# ---- MAIN APP AFTER INTRO ---- #
+st.session_state.intro_done = True
+
+# Load model
 pipe = pickle.load(open('pipe.pkl', 'rb'))
 
-# Define Teams & Cities
-teams = ['Sunrisers Hyderabad', 'Mumbai Indians', 'Royal Challengers Bangalore', 
-         'Kolkata Knight Riders', 'Kings XI Punjab', 'Chennai Super Kings', 
+# Define teams and cities
+teams = ['Sunrisers Hyderabad', 'Mumbai Indians', 'Royal Challengers Bangalore',
+         'Kolkata Knight Riders', 'Kings XI Punjab', 'Chennai Super Kings',
          'Rajasthan Royals', 'Delhi Capitals']
 
 cities = ['Hyderabad', 'Bangalore', 'Mumbai', 'Indore', 'Kolkata', 'Delhi',
@@ -68,21 +116,14 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Main Heading
+# Headings and Image
 st.markdown("<p class='big-text'>Can't Tell a Yorker from a Googly? We Got Your IPL Predictions Covered</p>", unsafe_allow_html=True)
 st.markdown("<p class='small-text'>Dominate your fantasy league and win big with our winning strategies</p>", unsafe_allow_html=True)
-
-# Image Path Handling for Top Image
-top_image_path = "images/ipl_players.jpeg" 
-st.image(top_image_path, use_container_width=True)
-
-# Add scrolling gap
+st.image("images/ipl_players.jpeg", use_container_width=True)
 st.markdown("<br><br><br><br><br><br><br><br><br><br><br><br><br><br>", unsafe_allow_html=True)
-
-# Title
 st.markdown("<p class='title-text'>IPL VICTORY PREDICTOR</p>", unsafe_allow_html=True)
 
-# Layout
+# Input Form
 col1, col2 = st.columns(2)
 
 with col1:
@@ -95,9 +136,9 @@ with col1:
     wickets = st.number_input('Wickets fallen', min_value=0, max_value=10, key="wickets")
 
 with col2:
-    trophy_image_path = "images/ipl_trophy.jpeg"
-    st.image(trophy_image_path, use_container_width=True)
+    st.image("images/ipl_trophy.jpeg", use_container_width=True)
 
+# Prediction Logic
 with col1:
     if st.button('Predict'):
         if overs == 0:
