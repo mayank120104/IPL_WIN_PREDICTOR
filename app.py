@@ -69,8 +69,8 @@ st.markdown("<p class='big-text'>Can't Tell a Yorker from a Googly? We Got Your 
 st.markdown("<p class='small-text'>Dominate your fantasy league and win big with our winning strategies</p>", unsafe_allow_html=True)
 
 # Image Path Handling for Top Image
-top_image_path = r"C:\Users\MAYANK SHARMA\OneDrive\Desktop\render-demo\myenv\ipl_players.jpeg"  
-st.image(top_image_path, use_container_width=True)  
+top_image_path = "images/ipl_players.jpeg" 
+st.image(top_image_path, use_container_width=True)
 
 # **Add a Large Gap for Scrolling Effect**
 st.markdown("<br><br><br><br><br><br><br><br><br><br><br><br><br><br>", unsafe_allow_html=True)
@@ -92,8 +92,8 @@ with col1:
 
 # Right Side: IPL Trophy Image
 with col2:
-    trophy_image_path = r"C:\Users\MAYANK SHARMA\OneDrive\Desktop\render-demo\myenv\ipl_trophy.jpeg" 
-    st.image(trophy_image_path, use_container_width=True)  
+    trophy_image_path = "images/ipl_trophy.jpeg"
+    st.image(trophy_image_path, use_container_width=True)
 
 # Predict Button - Aligned and Styled
 with col1:
