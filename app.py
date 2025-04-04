@@ -1,58 +1,29 @@
 import streamlit as st
 import pickle
 import pandas as pd
-import base64
+import time
 import os
 
 # Set page configuration
 st.set_page_config(page_title="IPL Victory Predictor", layout="wide")
 
-# Function to play local MP4 splash screen
-def autoplay_video(file_path):
-    with open(file_path, "rb") as video_file:
-        video_bytes = video_file.read()
-        encoded = base64.b64encode(video_bytes).decode()
-        video_html = f"""
-        <style>
-        .video-container {{
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            width: 100vw;
-            background-color: black;
-            z-index: 9999;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }}
-        video {{
-            height: 100%;
-            width: 100%;
-            object-fit: cover;
-        }}
-        </style>
-        <div class="video-container">
-            <video autoplay muted onended="parent.postMessage('video_done', '*')">
-                <source src="data:video/mp4;base64,{encoded}" type="video/mp4">
-            </video>
-        </div>
-        <script>
-        window.addEventListener('message', (event) => {{
-            if (event.data === 'video_done') {{
-                window.location.reload();
-            }}
-        }});
-        </script>
-        """
-        st.markdown(video_html, unsafe_allow_html=True)
+def splash_screen():
+    col1, col2, col3 = st.columns([1, 4, 1])
+
+    with col2:
+        st.video("videos/intro_clip.mp4")
+        if st.button("⏭️ Skip Intro"):
+            st.session_state.splash_shown = True
+            st.experimental_rerun()
+
+    time.sleep(38)  # Adjust duration as needed
+    st.session_state.splash_shown = True
+    st.experimental_rerun()
 
 def main():
     # Splash screen logic
     if 'splash_shown' not in st.session_state:
-        autoplay_video("videos/intro_clip.mp4")
-        st.session_state.splash_shown = True
-        st.stop()
+        splash_screen()
 
     # Load the trained model
     pipe = pickle.load(open('pipe.pkl', 'rb'))
