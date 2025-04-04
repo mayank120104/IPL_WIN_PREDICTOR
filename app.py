@@ -144,6 +144,7 @@ def main():
                 st.warning("Overs completed cannot be zero!")
             else:
                 runs_left = target - score
-                balls_left = 120 -
+                balls_left = 120 - (overs * 6)
+
 ::contentReference[oaicite:5]{index=5}
  
