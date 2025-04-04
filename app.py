@@ -1,34 +1,61 @@
 import streamlit as st
 import pickle
 import pandas as pd
-import time
+import base64
 import os
 
 # Set page configuration
 st.set_page_config(page_title="IPL Victory Predictor", layout="wide")
 
+# Function to play splash video
 def splash_screen():
-    col1, col2, col3 = st.columns([1, 4, 1])
+    with open("videos/intro_clip.mp4", "rb") as video_file:
+        video_bytes = video_file.read()
+        encoded = base64.b64encode(video_bytes).decode()
+        video_html = f"""
+        <style>
+        .video-container {{
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 100vw;
+            background-color: black;
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }}
+        video {{
+            height: 100%;
+            width: 100%;
+            object-fit: cover;
+        }}
+        </style>
+        <div class="video-container">
+            <video autoplay muted onended="window.parent.postMessage('video_done', '*')">
+                <source src="data:video/mp4;base64,{encoded}" type="video/mp4">
+            </video>
+        </div>
+        <script>
+        window.addEventListener('message', function(event) {{
+            if (event.data === 'video_done') {{
+                const streamlitDoc = window.parent.document;
+                const skipButton = streamlitDoc.querySelector('[data-testid="stButton"] button');
+                if (skipButton) skipButton.click();
+            }}
+        }});
+        </script>
+        """
+        st.markdown(video_html, unsafe_allow_html=True)
+        st.button("Skip Intro", on_click=lambda: st.session_state.update({'splash_shown': True}))
 
-    with col2:
-        st.video("videos/intro_clip.mp4")
-        if st.button("⏭️ Skip Intro"):
-            st.session_state.splash_shown = True
-            st.experimental_rerun()
+# Main App
 
-    time.sleep(38)  # Adjust duration as needed
-    st.session_state.splash_shown = True
-    st.experimental_rerun()
-
-def main():
-    # Splash screen logic
-    if 'splash_shown' not in st.session_state:
-        splash_screen()
-
+def main_app():
     # Load the trained model
     pipe = pickle.load(open('pipe.pkl', 'rb'))
 
-    # Define Teams & Cities
     teams = ['Sunrisers Hyderabad', 'Mumbai Indians', 'Royal Challengers Bangalore', 
              'Kolkata Knight Riders', 'Kings XI Punjab', 'Chennai Super Kings', 
              'Rajasthan Royals', 'Delhi Capitals']
@@ -40,66 +67,52 @@ def main():
               'Visakhapatnam', 'Pune', 'Raipur', 'Ranchi', 'Abu Dhabi',
               'Sharjah', 'Mohali', 'Bengaluru']
 
-    # Custom Styling
-    st.markdown(
-        """
-        <style>
-        body {
-            background-color: black;
-        }
-        .big-text {
-            font-size: 70px !important;
-            font-weight: bold;
-            text-align: center;
-            color: white;
-            margin-top: 20px;
-        }
-        .small-text {
-            font-size: 24px;
-            text-align: center;
-            color: white;
-        }
-        .title-text {
-            font-size: 60px !important;
-            font-weight: bold;
-            text-align: left;
-            color: white;
-            margin-top: 50px;
-        }
-        .stButton>button {
-            width: 100%;
-            background-color: #FF4500;
-            color: white;
-            font-size: 20px;
-            padding: 10px;
-            border-radius: 8px;
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
-        .stButton>button:hover {
-            background-color: #D84315;
-            color: white;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
+    st.markdown("""
+    <style>
+    body { background-color: black; }
+    .big-text {
+        font-size: 70px !important;
+        font-weight: bold;
+        text-align: center;
+        color: white;
+        margin-top: 20px;
+    }
+    .small-text {
+        font-size: 24px;
+        text-align: center;
+        color: white;
+    }
+    .title-text {
+        font-size: 60px !important;
+        font-weight: bold;
+        text-align: left;
+        color: white;
+        margin-top: 50px;
+    }
+    .stButton>button {
+        width: 100%;
+        background-color: #FF4500;
+        color: white;
+        font-size: 20px;
+        padding: 10px;
+        border-radius: 8px;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    .stButton>button:hover {
+        background-color: #D84315;
+        color: white;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
-    # Main Heading
     st.markdown("<p class='big-text'>Can't Tell a Yorker from a Googly? We Got Your IPL Predictions Covered</p>", unsafe_allow_html=True)
     st.markdown("<p class='small-text'>Dominate your fantasy league and win big with our winning strategies</p>", unsafe_allow_html=True)
 
-    # Top Image
-    top_image_path = "images/ipl_players.jpeg" 
-    st.image(top_image_path, use_container_width=True)
-
-    # Add vertical spacing
+    st.image("images/ipl_players.jpeg", use_container_width=True)
     st.markdown("<br>" * 14, unsafe_allow_html=True)
-
-    # Title
     st.markdown("<p class='title-text'>IPL VICTORY PREDICTOR</p>", unsafe_allow_html=True)
 
-    # Layout
-    col1, col2 = st.columns(2)  
+    col1, col2 = st.columns(2)
 
     with col1:  
         batting_team = st.selectbox('Select the batting team', sorted(teams), key="batting_team")
@@ -111,8 +124,7 @@ def main():
         wickets = st.number_input('Wickets fallen', min_value=0, max_value=10, key="wickets")
 
     with col2:
-        trophy_image_path = "images/ipl_trophy.jpeg"
-        st.image(trophy_image_path, use_container_width=True)
+        st.image("images/ipl_trophy.jpeg", use_container_width=True)
 
     with col1:
         if st.button('Predict'):
@@ -145,7 +157,8 @@ def main():
                 st.markdown(f"<h2 style='text-align: left; color: #FF4500;'>{bowling_team} - {round(loss_prob * 100)}%</h2>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
-    # Needed for Render to find and run the app
-    port = int(os.environ.get("PORT", 8501))
-    st._is_running_with_streamlit = True  # Workaround for streamlit CLI check
-    main()
+    if 'splash_shown' not in st.session_state or not st.session_state.splash_shown:
+        splash_screen()
+        st.stop()
+    else:
+        main_app()
